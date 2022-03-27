@@ -1,6 +1,9 @@
 import json, requests, hashlib, rsa, pickle, time
 
 # Runs and Returns the Config Data
+import os.path
+
+
 def runConfig():
 
     # Opens the config File
@@ -60,11 +63,9 @@ def publicPrivateGen():
         addNewWallet()
 
         print('<Wallet Generated!>')
-
     # If it exists
     elif config['generated_keys'] == 'true':
         print('<Wallet Detected!>')
-
     # Otherwise
     else:
         print('<Please put true or false as an option in the config for wallet generation>')
@@ -145,6 +146,53 @@ def lunchHash(function_input):
     # Returns the finale hash
     return finale_hash
 
+# Checks to see if the harvest has changed, or if you can win the harvest
+def check_for_harvest():
+
+    # Variable
+    url = config['url'] + '/check_harvest'
+
+    # Checks and gets the crop number
+    r = requests.get(url)
+
+    # Opens the plot file
+    with open('plot.json', 'r') as plot_file:
+        plot = json.load(plot_file)
+        plot_file.close()
+
+    # Checks if you have the right answer
+    if (plot['plot_number'] - 2500) <= int(r.text) < plot['plot_number']:
+
+        # Variables
+        url = config['url'] + '/submit_harvest'
+        public_key = getPublicKey()
+
+        # Gets the Plot info and packs it into a string
+        plot_str = json.dumps(plot)
+
+        # Gets Public Key info and packs it into a string
+        public_key_dic = {
+            'public_key.n': public_key.n,
+            'public_key.e': public_key.e
+        }
+        public_key_str = json.dumps(public_key_dic)
+
+        # Wraps it all into one nice string
+        data = {'sent_data': plot_str, 'public_key_str': public_key_str}
+
+        # Checks to see if you lied or not on the answer
+        response = requests.post(url, data=data)
+
+        # If you win
+        if response.text == '0':
+            print('<Successfully Won the Harvest, Prepare for the Reward!>')
+        else: # If you were meant to win, but did not cause bug
+            print('<The harvest was rightfully yours, but the server disagrees! Contact Josh for Help>')
+    elif r.text == '1': #If you trigger a new harvest
+        print('<New Harvest in Session!>')
+    else: # If you do not have the winning crop
+        print('<Did not win this harvest, better luck next time!>')
+
 # Main Function
 if __name__ == "__main__":
 
@@ -160,4 +208,14 @@ if __name__ == "__main__":
         # Syncs the ledger with the server
         syncLedger()
 
-        time.sleep(10)
+        # Checks if the Plot Exists
+        plot_exists = os.path.exists('plot.json')
+
+        # If it does
+        if plot_exists:
+            check_for_harvest()
+        else: # If not
+            print('<You do not yet have a plot generated! Run the Generation file to do so!>')
+
+        # Idle for 5 Seconds
+        time.sleep(5)
