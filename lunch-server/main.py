@@ -1,4 +1,4 @@
-import cherrypy, rsa, pickle, json, hashlib, base64
+import cherrypy, rsa, pickle, json, hashlib, base64, time
 
 # Runs and Returns the Config Data
 def runConfig():
@@ -33,18 +33,6 @@ def dumpLedger(ledger):
         # Dumps the Ledger Data
         json.dump(ledger, ledger_file)
         ledger_file.close()
-
-def getBlock():
-    with open('block.json', 'r') as block_file:
-        block = json.load(block_file)
-        block_file.close()
-
-        return block
-
-def dumpBlock(block):
-    with open('block.json', 'w') as block_file:
-        json.dump(block, block_file)
-        block_file.close()
 
 # Checks if there are keys generated, if not then it generates a public private key pair
 def publicPrivateGen(config_file):
@@ -234,14 +222,130 @@ class App:
             print('<Fraudulent Transaction Detected!>')
             return '1'
 
+    # If someone makes a new plot
+    @cherrypy.expose
+    def new_plot(self, new_plot_str):
+
+        # Loads the Plot info
+        new_plot_dic = json.loads(new_plot_str)
+
+        # Initializes Variables
+        public_key = getPublicKey()
+        public_key.n = new_plot_dic['public_key.n']
+        public_key.e = new_plot_dic['public_key.e']
+        message = new_plot_dic['message']
+
+        # Initializes more Variables
+        base64_signed_message = bytes(new_plot_dic['signed_message'], 'utf-8')
+        signed_message = base64.b64decode(base64_signed_message)
+
+        # Verifies the request to make a plot
+        verify_sign = rsa.verify(message.encode(), signed_message, public_key)
+
+        # If Good
+        if verify_sign == 'SHA-256':
+            ledger = getLedger()
+
+            # If they have enough coin
+            if ledger[str(public_key.n) + '_LCH'] >= 10:
+
+                ledger[str(public_key.n) + '_LCH'] = ledger[str(public_key.n) + '_LCH'] - 10
+                ledger['__burn___LCH'] = ledger['__burn___LCH'] + 10
+                dumpLedger(ledger)
+
+                with open('plots.json', 'r') as plots_file_read:
+                    plots_dic = json.load(plots_file_read)
+                    plots_file_read.close()
+
+                plots_dic['plot_max_crops'] = plots_dic['plot_max_crops'] + 2500
+
+                with open('plots.json', 'w') as plot_file_write:
+                    plots_dic[str(public_key.n)] = plots_dic['plot_max_crops']
+                    json.dump(plots_dic ,plot_file_write)
+                    plot_file_write.close()
+
+                return str(plots_dic['plot_max_crops'])
+            else: # If they do not have enough coin
+                return '1'
+        else: # If they did not sign properly
+            return '2'
+
+    # Updates and sends out the winning crop number
+    @cherrypy.expose
+    def check_harvest(self):
+
+        # Opens the Plots JSON
+        with open('plots.json', 'r') as plot_file:
+            plot = json.load(plot_file)
+            plot_file.close()
+
+        # If it needs to be updated
+        if time.time() % 10 == 0:
+            plot['new_crop'] = time.time() % plot['plot_max_crops']
+            plot['crop_awarded'] = 0
+
+            # Opens the Plots JSON for writting
+            with open('plots.json', 'w') as plot_file_write:
+                json.dump(plot, plot_file_write)
+                plot_file_write.close()
+
+            return '1'
+        else: # If same winning crop still valid
+            return str(plot['new_crop'])
+
+    # Checks whether someone wins the crop or not
+    @cherrypy.expose
+    def submit_harvest(self, sent_data, public_key_str):
+
+        # Opens the Plots JSON for reading
+        with open('plots.json', 'r') as plot_file:
+            plot = json.load(plot_file)
+            plot_file.close()
+
+        # Loads the data that was sent over
+        sent_plot = json.loads(sent_data)
+        sent_public_key = json.loads(public_key_str)
+
+        # Initializes the Public Key
+        public_key = getPublicKey()
+        public_key.n = sent_public_key['public_key.n']
+        public_key.e = sent_public_key['public_key.e']
+
+        # If the person is right and has not won
+        if sent_plot['new_crop'] == plot['new_crop'] and plot['crop_awarded'] == 0:
+            # If the winner claiming the prize is legit
+            if (plot[str(public_key.n)] - 2500) <= plot['new_crop'] < plot[str(public_key.n)]:
+
+                # Initializes the Ledger
+                ledger = getLedger()
+
+                # Pays the Reward
+                ledger[str(public_key.n) + '_LCH'] = ledger[str(public_key.n) + '_LCH'] + 0.01
+
+                # Saves the Ledger
+                dumpLedger(ledger)
+
+                # Stops them from winning with the same crop this go round
+                plot['crop_awarded'] = 1
+
+                # Saves that to the plto file
+                with open('plots.json', 'w') as plot_file_write:
+                    json.dump(plot, plot_file_write)
+                    plot_file_write.close()
+
+                print('<Someone Successfully Harvested!>')
+
+                return '0'
+            else: # If they won before, but have to wait until it updates
+                print('<Someone is Trying to Harvest the same Crop!>')
+        else: # Submitted the wrong Crop
+            print('<Someone Failed the Harvest Submit!>')
+
 # Main Function
 if __name__ == '__main__':
 
     # Loads the config file
     config = runConfig()
-
-    # Initializes the Block Dictionary
-    block = getBlock()
 
     # Generates a Public Private Key Pair if one does not exist
     publicPrivateGen(config)
