@@ -321,7 +321,7 @@ class App:
                 ledger = getLedger()
 
                 # Pays the Reward
-                ledger[str(public_key.n) + '_LCH'] = ledger[str(public_key.n) + '_LCH'] + 0.01
+                ledger[str(public_key.n) + '_LCH'] = ledger[str(public_key.n) + '_LCH'] + 0.001
 
                 # Saves the Ledger
                 dumpLedger(ledger)
