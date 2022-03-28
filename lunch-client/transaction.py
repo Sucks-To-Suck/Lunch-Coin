@@ -53,6 +53,10 @@ public_key = getPrivateKey()
 # Gets the locally saved ledger
 ledger = getLedger()
 
+# Prints how much coin the user has
+print('This is how much you have:')
+print(ledger[str(public_key.n) + '_LCH'] + '\n')
+
 # Ask User who they are sending coin to, and how much:
 print('This program will allow you to send coin to another person on the network. False information entered will not count against you, only inconvenience you.\n')
 
