@@ -280,9 +280,10 @@ class App:
             plot_file.close()
 
         # If it needs to be updated
-        if time.time() % 10 == 0:
+        if plot['new_crop_time'] + 10 < time.time():
             plot['new_crop'] = time.time() % plot['plot_max_crops']
             plot['crop_awarded'] = 0
+            plot['new_crop_time'] = time.time()
 
             # Opens the Plots JSON for writting
             with open('plots.json', 'w') as plot_file_write:
