@@ -140,7 +140,7 @@ else: # If you do not have a plot
 
                 # Sometimes tells you the till progress
                 if plot_start % 5 == 0:
-                    print('<Tilling Plot! ' + str((x + plot_start / plot_number) * 100) + '% Finished!>')
+                    print('<Tilling Plot! ' + str((x / 2500) * 100) + '% Finished!>')
 
             print ('<Plot Fully Tilled! You are ready to Farm!>')
     else: # If you do not have enough coin
