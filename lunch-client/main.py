@@ -167,6 +167,9 @@ def check_for_harvest():
         url = config['url'] + '/submit_harvest'
         public_key = getPublicKey()
 
+        # Saves the New Crop to be used by the Server for Verification of the New Crop
+        plot['new_crop'] = int(r.text)
+        
         # Gets the Plot info and packs it into a string
         plot_str = json.dumps(plot)
 
