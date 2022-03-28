@@ -139,7 +139,7 @@ else: # If you do not have a plot
                     plot_file.close()
 
                 # Sometimes tells you the till progress
-                if plot_start % 5 == 0:
+                if x % 5 == 0:
                     print('<Tilling Plot! ' + str((x / 2500) * 100) + '% Finished!>')
 
             print ('<Plot Fully Tilled! You are ready to Farm!>')
