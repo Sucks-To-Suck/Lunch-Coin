@@ -130,8 +130,8 @@ else: # If you do not have a plot
             plot_dic = {'plot_number': plot_number, 'new_crop': 0}
 
             # Tills the Plot
-            for plot_start in range(2500):
-                plot_dic[str(plot_start)] = lunchHash(str(plot_start))
+            for x in range(2500):
+                plot_dic[str(x + plot_start)] = lunchHash(str(x + plot_start))
 
                 # Saves the Info
                 with open('plot.json', 'w') as plot_file:
