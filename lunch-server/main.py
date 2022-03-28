@@ -281,7 +281,7 @@ class App:
 
         # If it needs to be updated
         if plot['new_crop_time'] + 10 < time.time():
-            plot['new_crop'] = time.time() % plot['plot_max_crops']
+            plot['new_crop'] = int(time.time() % plot['plot_max_crops'])
             plot['crop_awarded'] = 0
             plot['new_crop_time'] = time.time()
 
