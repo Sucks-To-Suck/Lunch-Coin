@@ -189,6 +189,8 @@ def check_for_harvest():
         # If you win
         if response.text == '0':
             print('<Successfully Won the Harvest, Prepare for the Reward!>')
+        elif response.text == '1':
+            print('<You won the harvest already!>')
         else: # If you were meant to win, but did not cause bug
             print('<The harvest was rightfully yours, but the server disagrees! Contact Josh for Help>')
     elif r.text == '1': #If you trigger a new harvest
