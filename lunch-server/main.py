@@ -339,10 +339,10 @@ class App:
                 return '0'
             else: # If they won before, but have to wait until it updates
                 print('<Someone who was not suppose to subbmitted!>')
-                
-                return '1'
         else: # Submitted the wrong Crop
             print('<Someone is Trying to Harvest the same Crop!>')
+            
+            return '1'
 
 # Main Function
 if __name__ == '__main__':
